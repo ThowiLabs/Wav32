@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wav32 · Panel de control</title>
+<script src="/chart.js?v=044" defer></script>
+<style>
+:root{
+  --bg:#0a0f1a; --bg2:#0d1420; --card:#111a2b; --card2:#152136; --line:#1e2c44;
+  --txt:#e8eef7; --mut:#8fa3bd; --dim:#5d718c;
+  --acc:#38bdf8; --acc2:#818cf8; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+  --grad:linear-gradient(135deg,#38bdf8,#818cf8);
+  --r:16px; --sb:248px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scrollbar-color:#243452 var(--bg)}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex}
+::selection{background:#38bdf855}
+a{color:var(--acc);text-decoration:none}
+.mono{font-family:'JetBrains Mono',monospace}
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.sm{width:16px;height:16px}.ic.lg{width:26px;height:26px}
+
+/* ---------- Sidebar ---------- */
+aside{width:var(--sb);flex:none;background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:20}
+.logo{display:flex;align-items:center;gap:12px;padding:22px 20px 18px}
+.logo-mark{width:42px;height:42px;border-radius:12px;background:var(--grad);display:grid;place-items:center;color:#06121f;box-shadow:0 6px 20px #38bdf844}
+.logo-mark .ic{stroke-width:2.4}
+.logo b{font-size:19px;letter-spacing:.2px;display:block;line-height:1}
+.logo small{color:var(--dim);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+nav{padding:6px 12px;display:flex;flex-direction:column;gap:2px}
+nav .cap{font-size:10.5px;font-weight:700;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;padding:14px 10px 6px}
+.nav-it{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--mut);font-weight:550;font-size:14.5px;cursor:pointer;border:1px solid transparent;transition:.15s}
+.nav-it:hover{color:var(--txt);background:#ffffff08}
+.nav-it.on{color:#fff;background:linear-gradient(90deg,#38bdf81f,#818cf812);border-color:#38bdf833}
+.nav-it.on .ic{color:var(--acc)}
+.nav-it .bdg{margin-left:auto;background:#f87171;color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px}
+.side-foot{margin-top:auto;padding:16px}
+.up-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.up-card .row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.dot{width:9px;height:9px;border-radius:99px;background:var(--ok);box-shadow:0 0 0 4px #34d39922;animation:pl 2s infinite}
+@keyframes pl{50%{box-shadow:0 0 0 7px #34d39900}}
+.up-card small{color:var(--mut);display:block;margin-top:6px;font-size:12px;line-height:1.5}
+
+/* ---------- Main ---------- */
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+header.top{position:sticky;top:0;z-index:15;background:#0a0f1acc;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:14px 28px}
+header.top h1{font-size:19px;font-weight:700}
+header.top .crumb{color:var(--dim);font-size:13px}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--dim);width:250px}
+.search input{background:none;border:0;outline:0;color:var(--txt);font:inherit;font-size:13.5px;width:100%}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:7px 13px;font-size:13px;font-weight:600}
+.avatar{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-weight:800;color:#06121f;font-size:14px}
+.wrap{padding:26px 28px 40px;max-width:1460px;width:100%;margin:0 auto}
+.page{display:none;animation:fd .25s ease}
+.page.on{display:block}
+@keyframes fd{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* ---------- Cards & grids ---------- */
+.grid{display:grid;gap:18px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+.g-main{grid-template-columns:1fr 340px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.card h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
+.card h3 .ic{color:var(--acc)}
+.card .sub{color:var(--mut);font-size:13px;margin-top:3px}
+.stat .top-r{display:flex;justify-content:space-between;align-items:flex-start}
+.stat .lab{color:var(--mut);font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.stat .val{font-size:27px;font-weight:800;margin-top:8px;letter-spacing:-.02em}
+.stat .val small{font-size:14px;color:var(--mut);font-weight:600}
+.stat .foot{margin-top:8px;font-size:12.5px;color:var(--mut);display:flex;gap:6px;align-items:center}
+.ico-box{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#38bdf814;color:var(--acc)}
+.ico-box.v{background:#818cf814;color:var(--acc2)}.ico-box.g{background:#34d39914;color:var(--ok)}.ico-box.a{background:#fbbf2414;color:var(--warn)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px}
+.pill.ok{background:#34d3991c;color:var(--ok)}.pill.warn{background:#fbbf241c;color:var(--warn)}.pill.bad{background:#f871711c;color:var(--bad)}.pill.mu{background:#8fa3bd1c;color:var(--mut)}
+.bar{height:8px;background:#ffffff10;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--grad);transition:width .8s ease}
+canvas{max-width:100%}
+
+/* topology */
+.topo{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 2px}
+.tnode{text-align:center;flex:none}
+.tnode .tb{width:56px;height:56px;margin:0 auto;border-radius:16px;background:var(--card2);border:1px solid var(--line);display:grid;place-items:center;color:var(--acc)}
+.tnode b{display:block;font-size:12.5px;margin-top:8px}
+.tnode small{color:var(--dim);font-size:11px}
+.tlink{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--acc) 0 7px,transparent 7px 13px);opacity:.55;position:relative;top:-14px}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--dim);font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:13px 12px;border-bottom:1px solid #ffffff09;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:#ffffff04}
+.dev{display:flex;align-items:center;gap:12px}
+.dev .db{width:40px;height:40px;border-radius:11px;background:var(--card2);border:1px solid var(--line);display:grid;place-items:center;color:var(--acc)}
+
+/* forms */
+label.fl{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:0 0 7px}
+input[type=text],input[type=password],input[type=number],select,textarea{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;color:var(--txt);font:inherit;font-size:14px;padding:11px 13px;outline:0;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px #38bdf822}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.f-item{margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font:inherit;font-weight:650;font-size:14px;border-radius:11px;padding:11px 18px;transition:.15s}
+.btn.pri{background:var(--grad);color:#06121f}
+.btn.pri:hover{filter:brightness(1.12)}
+.btn.gh{background:#ffffff0a;color:var(--txt);border:1px solid var(--line)}
+.btn.gh:hover{background:#ffffff12}
+.btn.dng{background:#f8717118;color:var(--bad);border:1px solid #f8717140}
+.btn.sm{padding:8px 13px;font-size:13px;border-radius:9px}
+.sw{position:relative;width:46px;height:26px;flex:none;cursor:pointer}
+.sw input{opacity:0;width:0;height:0}
+.sw i{position:absolute;inset:0;background:#ffffff1c;border-radius:99px;transition:.2s}
+.sw i:before{content:"";position:absolute;width:20px;height:20px;border-radius:99px;background:#cbd5e1;top:3px;left:3px;transition:.2s}
+.sw input:checked + i{background:var(--acc)}
+.sw input:checked + i:before{transform:translateX(20px);background:#06121f}
+.tgl-row{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid #ffffff09}
+.tgl-row:last-child{border-bottom:0}
+.tgl-row .tt{flex:1}.tgl-row .tt b{font-size:14.5px;display:block}
+.tgl-row .tt small{color:var(--mut);font-size:12.5px}
+input[type=range]{width:100%;accent-color:var(--acc)}
+.dns-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.dns-c{background:var(--bg2);border:1.5px solid var(--line);border-radius:13px;padding:14px;cursor:pointer;transition:.15s}
+.dns-c:hover{border-color:#38bdf866}
+.dns-c.on{border-color:var(--acc);background:#38bdf80f}
+.dns-c b{font-size:14px;display:flex;align-items:center;gap:8px}
+.dns-c small{color:var(--mut);font-family:'JetBrains Mono',monospace;font-size:11.5px;display:block;margin-top:5px}
+.log{font-family:'JetBrains Mono',monospace;font-size:12.3px;line-height:1.9;color:var(--mut)}
+.log b{color:var(--txt);font-weight:600}
+.log .t{color:var(--dim)}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:#38bdf81a;color:var(--acc)}
+.drop{border:2px dashed #38bdf844;border-radius:14px;padding:28px;text-align:center;color:var(--mut);cursor:pointer;transition:.15s}
+.drop:hover{background:#38bdf808;color:var(--txt)}
+/* ---------- Modal de confirmación propio ---------- */
+.mback{position:fixed;inset:0;background:#04070cd9;backdrop-filter:blur(4px);z-index:200;display:none;place-items:center;padding:18px}
+.mback.on{display:grid}
+.modal{background:var(--card2);border:1px solid var(--line);border-radius:18px;max-width:420px;width:100%;padding:26px;box-shadow:0 24px 60px #000c;animation:fd .22s ease}
+.modal .mico{width:52px;height:52px;border-radius:15px;background:#f8717118;color:var(--bad);display:grid;place-items:center;margin-bottom:16px}
+.modal h3{font-size:17.5px;font-weight:750}
+.modal p{color:var(--mut);font-size:14px;line-height:1.6;margin-top:8px}
+.modal .mrow{display:flex;gap:10px;margin-top:22px}
+.modal .mrow .btn{flex:1;justify-content:center}
+#toast{position:fixed;bottom:24px;right:24px;z-index:99;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:12px;padding:13px 17px;font-size:14px;font-weight:550;box-shadow:0 12px 34px #0009;display:flex;gap:10px;align-items:center;animation:fd .25s}
+.danger{border-color:#f8717155!important}
+.banner{display:flex;gap:14px;align-items:flex-start;border-radius:var(--r);padding:16px 18px;margin-bottom:18px;border:1px solid}
+.banner.up{background:#818cf80d;border-color:#818cf844}
+.banner.ap{background:#34d3990d;border-color:#34d39944}
+.banner .ic{margin-top:2px}
+.banner b{font-size:14.5px;display:block}
+.banner small{color:var(--mut);font-size:13px;line-height:1.55}
+tr.blocked td{background:#f871710a}
+.blk-view{position:fixed;inset:0;z-index:300;background:radial-gradient(1200px 600px at 50% -10%,#f8717122,transparent),var(--bg);display:none;place-items:center;padding:20px}
+.blk-view.on{display:grid}
+.blk-card{max-width:430px;width:100%;text-align:center;background:var(--card);border:1px solid #f8717155;border-radius:22px;padding:38px 30px;box-shadow:0 30px 80px #000a}
+.blk-card .bic{width:74px;height:74px;margin:0 auto 18px;border-radius:20px;background:#f8717118;color:var(--bad);display:grid;place-items:center}
+.blk-card h1{font-size:24px;font-weight:800}
+.blk-card p{color:var(--mut);line-height:1.65;margin-top:10px;font-size:14.5px}
+.blk-x{position:absolute;top:16px;right:16px}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:10.5px 0;border-bottom:1px solid #ffffff09;font-size:13.5px}
+.kv:last-child{border:0}.kv span{color:var(--mut)}.kv b{font-weight:600;text-align:right}
+.up-net{display:flex;gap:14px;align-items:center;background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:12px}
+.up-net.on{border-color:#34d39988}
+.sig{display:flex;align-items:flex-end;gap:2px;height:18px}
+.sig i{width:4px;background:var(--ok);border-radius:2px;display:block}
+.sig i.off{background:#ffffff22}
+footer{padding:20px 28px;color:var(--dim);font-size:12.5px;display:flex;justify-content:space-between;border-top:1px solid var(--line)}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g-main{grid-template-columns:1fr}.g3{grid-template-columns:1fr}}
+@media(max-width:760px){aside{display:none}.g4,.g2,.f-row{grid-template-columns:1fr}.search{display:none}.wrap{padding:18px 14px 30px}header.top{padding:12px 14px}}
+
+.menuBtn{display:none}
+.sideBack{display:none}
+@media(max-width:1100px){
+  aside{display:flex;position:fixed;left:0;top:0;bottom:0;height:100dvh;z-index:200;transform:translateX(-105%);transition:transform .25s ease;box-shadow:0 0 60px #000c}
+  aside.open{transform:none}
+  .sideBack.on{display:block;position:fixed;inset:0;background:#000a;z-index:190}
+  .menuBtn{display:inline-flex}
+}
+@media(max-width:640px){.search{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ======== Sprite de iconos locales (SVG) ======== -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="18" y1="16" x2="22" y2="16"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M9 2v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="m17 2-5 5-5-5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-thermo" viewBox="0 0 24 24"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-act" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-net" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M10.5 7.5 6.8 16.4M13.5 7.5l3.7 8.9M8 19h8"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+  <symbol id="i-router" viewBox="0 0 24 24"><rect x="2" y="14" width="20" height="7" rx="2"/><path d="M12 14V4M8.5 7.5a5 5 0 0 1 7 0M6 10a8.5 8.5 0 0 1 12 0"/><path d="M6.5 17.5h.01M10 17.5h.01"/></symbol>
+</svg>
+
+<!-- ======== Sidebar ======== -->
+<aside id="sideBar">
+  <div class="logo">
+    <div class="logo-mark"><svg class="ic lg"><use href="#i-router"/></svg></div>
+    <div><b>Wav32</b><small>Router OS</small></div>
+  </div>
+  <nav>
+    <div class="cap">General</div>
+    <div class="nav-it on" data-go="home"><svg class="ic"><use href="#i-dash"/></svg>Inicio</div>
+    <div class="nav-it" data-go="terminal"><svg class="ic"><use href="#i-users"/></svg>Clientes<span class="bdg" id="navCli">5</span></div>
+    <div class="cap">Configuración</div>
+    <div class="nav-it" data-go="uplink"><svg class="ic"><use href="#i-globe"/></svg>Red superior</div>
+    <div class="nav-it" data-go="myap"><svg class="ic"><use href="#i-router"/></svg>Mi red Wav32</div>
+    <div class="nav-it" data-go="advanced"><svg class="ic"><use href="#i-sliders"/></svg>Avanzado</div>
+    <div class="nav-it" data-go="security"><svg class="ic"><use href="#i-shield"/></svg>Seguridad</div>
+    <div class="cap">Sistema</div>
+    <div class="nav-it" data-go="device"><svg class="ic"><use href="#i-cpu"/></svg>Dispositivo</div>
+  </nav>
+  <div class="side-foot">
+    <div class="up-card">
+      <div class="row"><span class="dot" id="upDot"></span><span id="upStateTxt">Enlace activo</span></div>
+      <small>Red superior <b class="mono" style="color:var(--txt)" id="upSsidTxt">—</b><br>WAN <span class="mono" id="upWanTxt">—</span> · <span id="upRssiTxt">—</span></small>
+    </div>
+    <button class="btn gh" style="width:100%;margin-top:12px;justify-content:center" onclick="doLogout()"><svg class="ic sm"><use href="#i-shield"/></svg>Cerrar sesión</button>
+  </div>
+</aside>
+<div class="sideBack" id="sideBack"></div>
+
+<!-- ======== Main ======== -->
+<main>
+  <header class="top">
+    <div>
+      <button class="icon-btn menuBtn" id="menuBtn" title="Menú"><svg class="ic lg"><use href="#i-menu"/></svg></button>
+      <h1 id="pgTitle">Inicio</h1>
+      <div class="crumb">Panel de control · <span class="mono">esp.local</span></div>
+    </div>
+    <div class="search"><svg class="ic sm"><use href="#i-search"/></svg><input placeholder="Buscar ajuste, cliente, MAC…"></div>
+    <span class="chip"><svg class="ic sm" style="color:var(--ok)"><use href="#i-wifi"/></svg><span class="mono" id="clock">--:--:--</span></span>
+    <span class="chip" style="cursor:pointer" onclick="toast('Sin notificaciones nuevas')"><svg class="ic sm"><use href="#i-bell"/></svg></span>
+    <div class="avatar">Y</div>
+  </header>
+
+  <div class="wrap">
+
+  <!-- ============ INICIO ============ -->
+  <section class="page on" id="page-home">
+    <div class="grid g4">
+      <div class="card stat">
+        <div class="top-r"><div><div class="lab">Enlace a Internet</div><div class="val" id="stWanVal">…</div></div><div class="ico-box g"><svg class="ic lg"><use href="#i-globe"/></svg></div></div>
+        <div class="foot"><span class="pill ok" id="stNatPill">NAT …</span><span id="stWanFoot">—</span></div>
+      </div>
+      <div class="card stat">
+        <div class="top-r"><div><div class="lab">Clientes</div><div class="val"><span id="stCli">–</span><small> / <span id="stCliMax">8</span> máx.</small></div></div><div class="ico-box"><svg class="ic lg"><use href="#i-users"/></svg></div></div>
+        <div class="foot"><svg class="ic sm" style="color:var(--ok)"><use href="#i-act"/></svg><span id="stBlockedFoot">0 bloqueados</span></div>
+      </div>
+      <div class="card stat">
+        <div class="top-r"><div><div class="lab">Señal del enlace</div><div class="val"><span id="stRssi">–</span><small> dBm</small></div></div><div class="ico-box v"><svg class="ic lg"><use href="#i-wifi"/></svg></div></div>
+        <div class="foot"><div class="bar" style="flex:1"><i id="stRssiBar" style="width:0%"></i></div><span id="stRssiTxt">—</span></div>
+      </div>
+      <div class="card stat">
+        <div class="top-r"><div><div class="lab">Tiempo encendido</div><div class="val" id="stUp">—</div></div><div class="ico-box a"><svg class="ic lg"><use href="#i-clock"/></svg></div></div>
+        <div class="foot">Firmware <span class="mono" id="stFw">Wav32</span></div>
+      </div>
+    </div>
+
+    <div class="grid g-main" style="margin-top:18px">
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-act"/></svg>Memoria libre en vivo</h3>
+          <div class="sub">RAM disponible del ESP32 · se actualiza cada 3 s</div>
+          <div style="display:flex;gap:22px;margin:16px 0 6px">
+            <div><div class="lab" style="color:var(--mut);font-size:12px;font-weight:600">LIBRE AHORA</div><div style="font-size:22px;font-weight:800"><span id="heapNow">–</span> <small style="font-size:13px;color:var(--mut)">KB</small></div></div>
+            <div><div class="lab" style="color:var(--mut);font-size:12px;font-weight:600">MÍNIMO (SESIÓN)</div><div style="font-size:22px;font-weight:800"><span id="heapMin">–</span> <small style="font-size:13px;color:var(--mut)">KB</small></div></div>
+            <div style="margin-left:auto;text-align:right"><div class="lab" style="color:var(--mut);font-size:12px;font-weight:600">PSRAM LIBRE</div><div style="font-size:22px;font-weight:800"><span id="psramNow">–</span> <small style="font-size:13px;color:var(--mut)">KB</small></div></div>
+          </div>
+          <div style="height:230px"><canvas id="chMain"></canvas></div>
+        </div>
+
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-net"/></svg>Topología de red</h3>
+          <div class="sub">Así fluye el internet de tus clientes</div>
+          <div class="topo">
+            <div class="tnode"><div class="tb"><svg class="ic lg"><use href="#i-globe"/></svg></div><b>Internet</b><small>Proveedor</small></div>
+            <div class="tlink"></div>
+            <div class="tnode"><div class="tb"><svg class="ic lg"><use href="#i-router"/></svg></div><b id="topoNet">—</b><small class="mono" id="topoGw">—</small></div>
+            <div class="tlink"></div>
+            <div class="tnode"><div class="tb" style="color:var(--ok);border-color:#34d39966"><svg class="ic lg"><use href="#i-router"/></svg></div><b>Wav32</b><small class="mono" id="topoApIp">—</small></div>
+            <div class="tlink"></div>
+            <div class="tnode"><div class="tb"><svg class="ic lg"><use href="#i-users"/></svg></div><b>Clientes</b><small id="topoCli">—</small></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-clock"/></svg>Registro de actividad</h3>
+          <div class="sub">Cambios de estado observados por este panel</div>
+          <div class="log" style="margin-top:12px" id="logBox"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-cpu"/></svg>Rendimiento</h3>
+          <div class="sub">ESP32 · doble núcleo</div>
+          <div style="height:170px;margin-top:8px"><canvas id="chHeapPct"></canvas></div>
+          <div style="margin-top:14px">
+            <div class="kv"><span>RAM en uso</span><b><span id="heapPctVal">–</span> %</b></div>
+            <div class="kv"><span>CPU</span><b><span id="cpuMhzVal">–</span> MHz</b></div>
+            <div class="kv"><span><svg class="ic sm" style="vertical-align:-3px"><use href="#i-thermo"/></svg> Temperatura</span><b><span id="tempVal">–</span> °C</b></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-gauge"/></svg>Memoria</h3>
+          <div style="margin-top:16px">
+            <div class="kv" style="border:0;padding-bottom:6px"><span>RAM libre</span><b class="mono"><span id="heapVal">–</span> KB</b></div>
+            <div class="bar"><i id="heapBar" style="width:0%"></i></div>
+            <div class="kv" style="margin-top:10px"><span>PSRAM libre</span><b class="mono"><span id="psramVal">–</span> KB</b></div>
+            <div class="bar"><i id="psramBar" style="width:0%;background:var(--acc2)"></i></div>
+            <div class="kv" style="margin-top:10px"><span>Encendido desde</span><b id="upKv">—</b></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-router"/></svg>Información</h3>
+          <div style="margin-top:8px">
+            <div class="kv"><span>Red Wav32</span><b class="mono" id="infApSsid">—</b></div>
+            <div class="kv"><span>IP del panel</span><b class="mono" id="infApIp">—</b></div>
+            <div class="kv"><span>IP WAN</span><b class="mono" id="infWanIp">—</b></div>
+            <div class="kv"><span>Puerta de enlace</span><b class="mono" id="infGw">—</b></div>
+            <div class="kv"><span>DNS efectivo</span><b class="mono" id="infDns">—</b></div>
+            <div class="kv"><span>MAC del AP</span><b class="mono" id="infMac">—</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLIENTES ============ -->
+  <section class="page" id="page-terminal">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <h3><svg class="ic"><use href="#i-users"/></svg>Dispositivos conectados</h3>
+          <div class="sub">Clientes de la red Wav32 en este momento</div>
+        </div>
+        <div class="search" style="margin:0"><svg class="ic sm"><use href="#i-search"/></svg><input id="cliSearch" placeholder="Filtrar por nombre, IP o MAC…"></div>
+        <button class="btn gh sm" onclick="loadClients(true)"><svg class="ic sm"><use href="#i-refresh"/></svg>Actualizar</button>
+      </div>
+      <div style="overflow-x:auto;margin-top:10px">
+      <table id="cliTable">
+        <thead><tr><th>Dispositivo</th><th>IP</th><th>Señal</th><th>Acciones</th></tr></thead>
+        <tbody id="cliBody"><tr><td colspan="4" style="color:var(--dim)">Cargando…</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RED SUPERIOR (a la que Wav32 SE CONECTA) ============ -->
+  <section class="page" id="page-uplink">
+    <div class="banner up">
+      <svg class="ic lg" style="color:var(--acc2)"><use href="#i-globe"/></svg>
+      <div><b>Red superior · Wav32 se conecta a estas redes</b>
+      <small>De aquí obtiene internet Wav32 (el «enlace»). No son redes que Wav32 crea: son las redes de otros routers, como tu red de casa «Google».</small></div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3><svg class="ic"><use href="#i-wifi"/></svg>Redes guardadas</h3>
+        <div class="sub">Hasta 3 · si la activa falla por 60 s, prueba la siguiente sola</div>
+        <div style="margin-top:16px">
+          <div id="upnetList"></div>
+          <button class="btn pri" style="width:100%;justify-content:center" onclick="scanNets()"><svg class="ic sm"><use href="#i-search"/></svg>Buscar redes cercanas</button>
+          <div id="scanBox" style="margin-top:14px"></div>
+        </div>
+      </div>
+      <div class="card" style="align-self:start">
+        <h3><svg class="ic"><use href="#i-sliders"/></svg>Conexión WAN</h3>
+        <div class="sub">Cómo obtiene Wav32 su dirección en la red superior</div>
+        <div style="margin-top:16px">
+          <div class="f-row">
+            <div class="f-item"><label class="fl">Modo WAN</label><select id="wanModeSel" onchange="wanModeChange()"><option value="dhcp">DHCP (automático)</option><option value="static">IP fija</option></select></div>
+            <div class="f-item"><label class="fl">Failover</label><input type="text" value="Automático · 60 s" disabled></div>
+          </div>
+          <div id="wanStaticFields" style="display:none">
+            <div class="f-row">
+              <div class="f-item"><label class="fl">IP WAN</label><input type="text" id="wanIpIn" placeholder="192.168.10.50"></div>
+              <div class="f-item"><label class="fl">Puerta de enlace</label><input type="text" id="wanGwIn" placeholder="192.168.10.1"></div>
+            </div>
+            <div class="f-row">
+              <div class="f-item"><label class="fl">Máscara</label><input type="text" id="wanMaskIn" placeholder="255.255.255.0"></div>
+              <div class="f-item"><label class="fl">DNS secundario</label><input type="text" id="wanDns2In" placeholder="opcional"></div>
+            </div>
+          </div>
+          <button class="btn pri" onclick="saveWanFields()" style="margin-bottom:14px"><svg class="ic sm"><use href="#i-save"/></svg>Guardar conexión WAN</button>
+          <div class="kv"><span>Estado</span><b id="wanStateKv">—</b></div>
+          <div class="kv"><span>IP WAN</span><b class="mono" id="wanIpKv">—</b></div>
+          <div class="kv"><span>Puerta de enlace</span><b class="mono" id="wanGwKv">—</b></div>
+          <div class="kv"><span>DNS del enlace</span><b class="mono" id="wanDnsKv">—</b></div>
+          <div class="kv"><span>Señal / canal</span><b class="mono" id="wanSigKv">—</b></div>
+          <div class="kv"><span>MAC de la STA</span><b class="mono" id="wanMacKv">—</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MI RED WAV32 (la que el ESP CREA) ============ -->
+  <section class="page" id="page-myap">
+    <div class="banner ap">
+      <svg class="ic lg" style="color:var(--ok)"><use href="#i-router"/></svg>
+      <div><b>Mi red Wav32 · la red que el ESP crea</b>
+      <small>Este es el Wi-Fi que Wav32 emite y al que se conectan tus dispositivos. Todo lo de esta página afecta solo a esta red, no a la red superior.</small></div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3><svg class="ic"><use href="#i-router"/></svg>Configuración del punto de acceso</h3>
+        <div class="sub">Nombre, clave y radio de tu red Wav32</div>
+        <div style="margin-top:16px">
+          <div class="f-item"><label class="fl">Nombre de la red (SSID)</label><input type="text" id="apSsidIn" value=""></div>
+          <div class="f-row">
+            <div class="f-item"><label class="fl">Seguridad</label><select id="apSecurity" onchange="el('apPassFields').style.display=this.value==='wpa2'?'block':'none'"><option value="open">Abierta (sin clave)</option><option value="wpa2">WPA2 con contraseña</option></select></div>
+            <div class="f-item"><label class="fl">Canal</label><select id="apChannelSel"><option value="0">Automático (sigue al enlace)</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select></div>
+          </div>
+          <div class="f-item" id="apPassFields" style="display:none"><label class="fl">Contraseña de tu red</label><input type="password" id="apPassIn" placeholder="8 a 63 caracteres"></div>
+          <div class="f-row">
+            <div class="f-item"><label class="fl">Máx. clientes</label><input type="number" id="apClientsIn" value="8" min="1" max="8"></div>
+            <div class="f-item"><label class="fl">Dirección de la red (LAN)</label><div style="display:flex;gap:8px"><input type="text" id="apLanIn" style="flex:1"><button class="btn gh sm" onclick="saveLan()">Aplicar</button></div></div>
+          </div>
+          <div class="f-item"><label class="fl">Potencia de transmisión · <b id="txVal" style="color:var(--txt)">19.5 dBm</b></label><input type="range" id="txRange" min="0" max="4" value="0" oninput="txLabel()"></div>
+          <div class="tgl-row"><div class="tt"><b>Red oculta</b><small>No mostrar el nombre en la lista de redes</small></div><label class="sw"><input type="checkbox" id="apHiddenSw"><i></i></label></div>
+          <button class="btn pri" onclick="saveAp()"><svg class="ic sm"><use href="#i-save"/></svg>Guardar cambios</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-globe"/></svg>DNS para tus clientes</h3>
+          <div class="sub">El DNS que reciben los dispositivos de tu red Wav32 · toca para elegir</div>
+          <div class="dns-grid" style="margin-top:16px" id="dnsGrid">
+            <div class="dns-c" data-dns="1.1.1.1"><b>Cloudflare</b><small>1.1.1.1 · rápido y privado</small></div>
+            <div class="dns-c" data-dns="auto"><b>Automático</b><small>El del router superior</small></div>
+            <div class="dns-c" data-dns="94.140.14.14"><b>AdGuard</b><small>94.140.14.14 · bloquea anuncios</small></div>
+            <div class="dns-c" data-dns="1.1.1.3"><b>Cloudflare Fam.</b><small>1.1.1.3 · filtro familiar</small></div>
+            <div class="dns-c" data-dns="9.9.9.9"><b>Quad9</b><small>9.9.9.9 · antimalware</small></div>
+            <div class="dns-c" data-dns="8.8.8.8"><b>Google</b><small>8.8.8.8</small></div>
+            <div class="dns-c" data-dns="208.67.222.222"><b>OpenDNS</b><small>208.67.222.222</small></div>
+            <div class="dns-c" data-dns="custom"><b>Personalizado</b><small>Escribe el tuyo…</small></div>
+          </div>
+          <div id="dnsCustomBox" style="display:none;margin-top:12px"><div style="display:flex;gap:8px"><input type="text" id="dnsCustomIn" placeholder="ej. 1.1.1.1" style="flex:1"><button class="btn gh" onclick="saveDnsCustom()">Usar este DNS</button></div></div>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-users"/></svg>Tu red ahora mismo</h3>
+          <div class="kv" style="margin-top:8px"><span>Dispositivos conectados</span><b id="apCliCount">–</b></div>
+          <div class="kv"><span>Dispositivos bloqueados</span><b id="apBlockedCount">0</b></div>
+          <div class="kv"><span>Panel de administración</span><b class="mono">192.168.32.1 · esp.local</b></div>
+          <button class="btn gh" style="margin-top:14px" onclick="document.querySelector('[data-go=terminal]').click()"><svg class="ic sm"><use href="#i-users"/></svg>Ver los clientes</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AVANZADO ============ -->
+  <section class="page" id="page-advanced">
+    <div class="grid g2">
+      <div class="card">
+        <h3><svg class="ic"><use href="#i-net"/></svg>Reenvío de puertos</h3>
+        <div class="sub">Abre servicios de tu red hacia el exterior · máx. 8 reglas</div>
+        <div class="tblwrap"><table style="margin-top:8px">
+          <thead><tr><th>Protocolo</th><th>Externo</th><th>Destino</th><th>Interno</th><th></th></tr></thead>
+          <tbody id="pmBody"></tbody>
+        </table></div>
+        <div class="f-row" style="margin-top:14px">
+          <div class="f-item"><label class="fl">Puerto externo</label><input type="number" id="pmExt" placeholder="ej. 8080"></div>
+          <div class="f-item"><label class="fl">IP de destino</label><input type="text" id="pmIp" placeholder="192.168.32.x"></div>
+        </div>
+        <div class="f-row">
+          <div class="f-item"><label class="fl">Puerto interno</label><input type="number" id="pmInt" placeholder="ej. 80"></div>
+          <div class="f-item"><label class="fl">Protocolo</label><select id="pmProto"><option value="TCP">TCP</option><option value="UDP">UDP</option></select></div>
+        </div>
+        <button class="btn gh" onclick="pmAdd()"><svg class="ic sm"><use href="#i-plus"/></svg>Agregar regla</button>
+        <p style="color:var(--dim);font-size:12.5px;margin-top:12px">Recuerda: con doble NAT también hay que abrir el puerto en el router superior.</p>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-zap"/></svg>Automatización</h3>
+          <div class="tgl-row"><div class="tt"><b>Watchdog de internet</b><small>Reconecta si se pierde el enlace (verifica puerta de enlace y 1.1.1.1)</small></div><label class="sw"><input type="checkbox" id="wdSw" onchange="saveToggles()"><i></i></label></div>
+          <div class="tgl-row"><div class="tt"><b>Reinicio diario</b><small>Reinicia el equipo a una hora fija</small></div><label class="sw"><input type="checkbox" id="schedSw" onchange="saveSchedule()"><i></i></label></div>
+          <div class="f-item" style="margin-top:12px"><label class="fl">Hora del reinicio</label><input type="text" id="schedTime" placeholder="04:30" onchange="saveSchedule()"></div>
+          <div class="tgl-row"><div class="tt"><b>LED del equipo</b><small>La luz blanca de la ESP32-CAM (GPIO 4)</small></div><label class="sw"><input type="checkbox" id="ledSw" onchange="saveLed()"><i></i></label></div>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-act"/></svg>Diagnóstico</h3>
+          <div class="sub">Comprobaciones rápidas del enlace</div>
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center">
+            <input type="text" id="diagHost" placeholder="dominio a resolver · ej. google.com" style="flex:1;min-width:200px">
+            <button class="btn gh sm" onclick="diagDns()">Resolver dominio</button>
+          </div>
+          <div class="log" style="margin-top:12px" id="diagBox"><span style="color:var(--dim)">Sin pruebas todavía en esta sesión.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SEGURIDAD ============ -->
+  <section class="page" id="page-security">
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-users"/></svg>Modo invitado</h3>
+          <div class="sub">Clave temporal para visitas · mientras esté activo, el panel solo responde a tu dispositivo</div>
+          <div class="tgl-row"><div class="tt"><b>Activar modo invitado</b><small>Tu red usa la clave temporal; al desactivarlo vuelve la anterior</small></div><label class="sw"><input type="checkbox" id="guestSw" onchange="guestToggle()"><i></i></label></div>
+          <div class="f-row" style="margin-top:14px">
+            <div class="f-item"><label class="fl">Clave temporal</label><input type="password" id="guestPassIn" placeholder="Clave temporal (8–63)"></div>
+            <div class="f-item"><label class="fl">Duración</label><input type="text" value="Hasta que lo desactives" disabled></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div class="card">
+          <h3><svg class="ic" style="color:var(--bad)"><use href="#i-shield"/></svg>Bloqueo avanzado</h3>
+          <div class="sub">El dispositivo <b style="color:var(--txt)">sí se conecta</b> a tu red y obtiene IP, pero <b style="color:var(--txt)">no tiene internet</b>: al abrir cualquier página, Wav32 lo manda a un aviso de bloqueo.</div>
+          <div style="margin-top:14px">
+            <label class="fl">Mensaje que verá el dispositivo bloqueado</label>
+            <textarea id="blkMsg" rows="3">Este dispositivo ha sido bloqueado por el administrador de la red Wav32. Si crees que es un error, contacta al administrador.</textarea>
+          </div>
+          <div class="kv" style="margin-top:6px"><span>Bloqueados ahora</span><b id="blkCount">0 dispositivos</b></div>
+          <div id="blockedList" style="margin-top:8px"><small style="color:var(--dim)">Ninguno todavía. Bloquea a alguien desde la página «Clientes».</small></div>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+            <button class="btn gh" onclick="showBlocked()"><svg class="ic sm"><use href="#i-shield"/></svg>Ver la página de bloqueo</button>
+            <button class="btn pri" onclick="saveBlkMsg()"><svg class="ic sm"><use href="#i-save"/></svg>Guardar mensaje</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-shield"/></svg>Control de acceso por MAC</h3>
+          <div class="sub">Modo de lista para la red Wav32</div>
+          <div class="f-item" style="margin-top:14px"><label class="fl">Modo</label><select id="macModeSel"><option value="off">Sin control</option><option value="allow">Lista blanca (solo permitidos)</option><option value="deny">Lista negra (bloquear listados)</option></select></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="macChips"></div>
+          <div style="display:flex;gap:10px;margin-top:14px"><input type="text" id="macIn" placeholder="AA:BB:CC:DD:EE:FF" style="flex:1"><button class="btn gh" onclick="macAdd()"><svg class="ic sm"><use href="#i-plus"/></svg></button></div>
+          <button class="btn pri" style="margin-top:14px" onclick="macSave()"><svg class="ic sm"><use href="#i-save"/></svg>Guardar control de acceso</button>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-shield"/></svg>Acceso al panel</h3>
+          <div class="tgl-row"><div class="tt"><b>Panel desde la red superior</b><small>Permite abrir esp.local conectado a la red superior (apagado = solo desde tu red Wav32)</small></div><label class="sw"><input type="checkbox" id="wanAdminSw" onchange="saveToggles()"><i></i></label></div>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-shield"/></svg>Administrador</h3>
+          <div class="sub">Usuario <b style="color:var(--txt)">admin</b> · el panel solo se administra desde la red Wav32</div>
+          <div class="f-item" style="margin-top:14px"><label class="fl">Contraseña actual</label><input type="password" id="admOld" placeholder="••••••••••••"></div><div class="f-item"><label class="fl">Nueva contraseña (mín. 4)</label><input type="password" id="admPass1" placeholder="••••••••••••"></div>
+          <div class="f-item"><label class="fl">Repetir contraseña</label><input type="password" id="admPass2" placeholder="••••••••••••"></div>
+          <button class="btn pri" onclick="saveAdmin()"><svg class="ic sm"><use href="#i-save"/></svg>Cambiar contraseña</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DISPOSITIVO ============ -->
+  <section class="page" id="page-device">
+    <div class="grid g-main">
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-refresh"/></svg>Actualización de firmware (OTA)</h3>
+          <div class="sub">Doble ranura: si la actualización falla, vuelve sola a la versión anterior</div>
+          <div class="drop" style="margin-top:16px" onclick="el('otaFile').click()">
+            <svg class="ic lg" style="color:var(--acc)"><use href="#i-up"/></svg>
+            <div style="font-weight:650;color:var(--txt);margin-top:8px">Suelta aquí el archivo .bin</div>
+            <small>o haz clic para elegirlo · se instala en la ranura libre</small>
+          </div>
+          <input type="file" id="otaFile" accept=".bin" style="display:none" onchange="otaUpload(this)">
+          <div class="kv" style="margin-top:14px"><span>Versión actual</span><b class="mono" id="otaFw">—</b></div>
+          <div class="kv"><span>Red superior</span><b class="mono" id="otaUp">—</b></div>
+          <div class="kv"><span>Panel</span><b>Nuevo · Wav32 0.4.6</b></div>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-save"/></svg>Respaldo y restauración</h3>
+          <div class="sub">El respaldo nunca incluye contraseñas</div>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+            <button class="btn gh" onclick="backupDl()"><svg class="ic sm"><use href="#i-down"/></svg>Descargar respaldo</button>
+            <button class="btn gh" onclick="el('restoreFile').click()"><svg class="ic sm"><use href="#i-up"/></svg>Restaurar respaldo</button>
+            <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreUp(this)">
+          </div>
+        </div>
+        <div class="card danger">
+          <h3 style="color:var(--bad)"><svg class="ic" style="color:var(--bad)"><use href="#i-trash"/></svg>Zona de peligro</h3>
+          <div class="sub">Acciones que no se pueden deshacer</div>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+            <button class="btn gh" onclick="rebootAsk()"><svg class="ic sm"><use href="#i-power"/></svg>Reiniciar equipo</button>
+            <button class="btn dng" onclick="askFactory()">Restablecer de fábrica</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-cpu"/></svg>Hardware</h3>
+          <div style="margin-top:8px">
+            <div class="kv"><span>Placa</span><b>ESP32-CAM AI-Thinker</b></div>
+            <div class="kv"><span>Chip</span><b>ESP32-D0WD-V3 rev 3.1</b></div>
+            <div class="kv"><span>CPU</span><b class="mono">2 núcleos · 240 MHz</b></div>
+            <div class="kv"><span>RAM / PSRAM</span><b class="mono">320 KB / 4 MB</b></div>
+            <div class="kv"><span>Flash</span><b class="mono">4 MB · doble ranura</b></div>
+            <div class="kv"><span>MAC STA</span><b class="mono" id="devMacSta">—</b></div>
+            <div class="kv"><span>Radio</span><b>Wi-Fi 2.4 GHz · 1 antena</b></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><svg class="ic"><use href="#i-gauge"/></svg>Salud en vivo</h3>
+          <div class="sub">Actualizado cada 2 s</div>
+          <div style="height:150px;margin-top:10px"><canvas id="chHeap"></canvas></div>
+          <div class="kv"><span>Temperatura del chip</span><b><span id="tempVal2">53.5</span> °C</b></div>
+          <div class="kv"><span>Watchdog</span><b id="sdWd">—</b></div>
+          <div class="kv"><span>Clientes bloqueados</span><b id="sdBlocked">0</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div>
+  <footer>
+    <span><b style="color:var(--mut)">Wav32</b> · Panel de control</span>
+    <span>Panel en vivo · Wav32 0.4.0</span>
+  </footer>
+</main>
+
+<!-- ======== Página de bloqueo (lo que ve el dispositivo bloqueado) ======== -->
+<div class="blk-view" id="blkView">
+  <button class="btn gh sm blk-x" onclick="hideBlocked()">✕ Cerrar vista previa</button>
+  <div class="blk-card">
+    <div class="bic"><svg class="ic" style="width:36px;height:36px"><use href="#i-shield"/></svg></div>
+    <h1>Has sido bloqueado</h1>
+    <p id="blkViewMsg">Este dispositivo ha sido bloqueado por el administrador de la red Wav32. Si crees que es un error, contacta al administrador.</p>
+    <p class="mono" style="font-size:12px;color:var(--dim)">Red: Wav32-XXXXXX · Tu IP: 192.168.32.100</p>
+    <button class="btn gh" style="margin-top:18px" onclick="hideBlocked()">Entendido</button>
+    <p style="font-size:11.5px;margin-top:16px;color:var(--dim)">Vista previa de demostración · así lo ve el dispositivo bloqueado al intentar navegar</p>
+  </div>
+</div>
+
+<!-- ======== Modal de confirmación (sin diálogos del navegador) ======== -->
+<div class="mback" id="mback">
+  <div class="modal">
+    <div class="mico"><svg class="ic lg"><use href="#i-trash"/></svg></div>
+    <h3 id="mTitle">¿Confirmar?</h3>
+    <p id="mText"></p>
+    <input id="mInput" type="text" style="display:none;margin-top:16px" placeholder="">
+    <div class="mrow">
+      <button class="btn gh" onclick="closeModal()">Cancelar</button>
+      <button class="btn dng" id="mOk" style="background:var(--bad);color:#fff;border:0">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= Wav32 · panel real (API en vivo) ================= */
+const el=id=>document.getElementById(id);
+let ST=null,CFG=null,heapHist=[],heapMin=null,prevState={};
+const blockedSet=new Set();
+
+/* ---------- Navegación SPA ---------- */
+const TITLES={home:'Inicio',terminal:'Clientes',uplink:'Red superior',myap:'Mi red Wav32',advanced:'Avanzado',security:'Seguridad',device:'Dispositivo'};
+document.querySelectorAll('.nav-it').forEach(n=>n.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-it').forEach(x=>x.classList.remove('on'));n.classList.add('on');
+  const p=n.dataset.go;
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  el('page-'+p).classList.add('on');
+  el('pgTitle').textContent=TITLES[p];
+  window.scrollTo({top:0,behavior:'smooth'});closeDrawer();
+  if(p==='terminal'){loadClients();if(chHeap)chHeap.resize();}
+  if(p==='home'){if(chMain)chMain.resize();if(chHeapPct)chHeapPct.resize();}
+  if(p==='advanced')loadPortmaps();
+}));
+
+el('menuBtn').addEventListener('click',()=>{el('sideBar').classList.add('open');el('sideBack').classList.add('on');});
+el('sideBack').addEventListener('click',()=>{el('sideBar').classList.remove('open');el('sideBack').classList.remove('on');});
+function closeDrawer(){el('sideBar').classList.remove('open');el('sideBack').classList.remove('on');}
+
+/* ---------- Utilidades ---------- */
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';
+  t.innerHTML='<svg class="ic sm" style="color:var(--ok)"><use href="#i-shield"/></svg>'+msg;
+  el('toast').appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='.4s';setTimeout(()=>t.remove(),420)},3000);
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+async function api(path,body){
+  const opt={credentials:'same-origin'};
+  if(body!==undefined){opt.method='POST';opt.headers={'Content-Type':'application/json','X-Wav32':'1'};opt.body=JSON.stringify(body);}
+  const r=await fetch(path,opt);
+  let v=null;try{v=await r.json();}catch(e){}
+  if(r.status===401){location.href='/';throw new Error('Sesión terminada');}
+  if(!r.ok)throw new Error((v&&v.error)||('HTTP '+r.status));
+  return v;
+}
+async function save(path,body,msg,reboot){
+  try{await api(path,body);toast(msg+(reboot?' · el equipo se reinicia…':''));return true;}
+  catch(e){toast('Error: '+e.message);return false;}
+}
+function fmtUp(s){s=+s||0;const d=Math.floor(s/86400),h=String(Math.floor(s%86400/3600)).padStart(2,'0'),m=String(Math.floor(s%3600/60)).padStart(2,'0'),x=String(s%60).padStart(2,'0');return (d?d+'d ':'')+h+':'+m+':'+x;}
+function logEvent(msg){
+  const b=el('logBox');if(!b)return;
+  const d=document.createElement('div');
+  d.innerHTML='<span class="t">'+new Date().toLocaleTimeString('es-MX')+'</span> · '+msg;
+  b.prepend(d);while(b.children.length>8)b.lastChild.remove();
+}
+
+/* ---------- Modal propio (sin diálogos del navegador) ---------- */
+let modalCb=null;
+function askConfirm(title,text,okLabel,cb,needText,placeholder){
+  el('mTitle').textContent=title;el('mText').textContent=text;el('mOk').textContent=okLabel;
+  const inp=el('mInput');
+  /* needText = palabra exacta a teclear (p. ej. RESTABLECER). placeholder = texto libre
+     (p. ej. la clave Wi-Fi): NUNCA se exige teclear el placeholder. Antes ambos iban
+     en el mismo parámetro y el modal de clave exigía teclear literalmente
+     «La clave de la red», por eso Conectar no hacía nada. */
+  if(needText||placeholder){inp.style.display='block';inp.value='';inp.placeholder=placeholder||needText;inp.dataset.need=placeholder?'':needText;}
+  else{inp.style.display='none';inp.dataset.need='';}
+  inp.type='text';
+  modalCb=cb;el('mback').classList.add('on');
+  if(needText)setTimeout(()=>inp.focus(),60);
+}
+function closeModal(){el('mback').classList.remove('on');modalCb=null;}
+el('mOk').addEventListener('click',()=>{
+  const inp=el('mInput');
+  if(inp.dataset.need && inp.value.trim()!==inp.dataset.need){toast('Escribe «'+inp.dataset.need+'» para confirmar');return;}
+  if(inp.style.display!=='none' && !inp.dataset.need && !inp.value.trim()){toast('Escribe la clave de la red');return;}
+  const cb=modalCb;closeModal();if(cb)cb(inp.value.trim());
+});
+el('mback').addEventListener('click',e=>{if(e.target.id==='mback')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();hideBlocked();}});
+
+/* ---------- Estado (polling) ---------- */
+function rssiClass(r){return r>=-55?'ok':(r>=-68?'warn':'bad');}
+function rssiTxt(r){return r>=-55?'Excelente':(r>=-65?'Buena':(r>=-75?'Regular':'Débil'));}
+async function loadStatus(){
+  try{ST=await api('/api/status');}catch(e){return;}
+  const on=ST.connected;
+  el('stWanVal').textContent=on?'En línea':'Sin enlace';
+  const np=el('stNatPill');np.textContent=ST.nat?'NAT activo':'NAT inactivo';np.className='pill '+(ST.nat?'ok':'bad');
+  el('stWanFoot').textContent=on?((ST.upstreamSsid||'—')+' · canal '+(ST.channel||'—')):'Sin red superior';
+  el('stCli').textContent=ST.clients;el('stCliMax').textContent=ST.maxClients;
+  el('navCli').textContent=ST.clients;
+  el('stBlockedFoot').textContent=(ST.blockedCount||0)+' bloqueados';
+  if(on){el('stRssi').textContent='−'+Math.abs(ST.rssi);el('stRssiBar').style.width=Math.max(4,Math.min(100,(100-Math.abs(ST.rssi))/60*100))+'%';el('stRssiTxt').textContent=rssiTxt(ST.rssi);}
+  else{el('stRssi').textContent='–';el('stRssiBar').style.width='0%';el('stRssiTxt').textContent='—';}
+  el('stFw').textContent=ST.firmware;
+  el('topoNet').textContent=ST.upstreamSsid||'—';el('topoGw').textContent=ST.gateway||'—';
+  el('topoApIp').textContent=ST.apIP;el('topoCli').textContent=ST.clients+' dispositivos';
+  el('infApSsid').textContent=ST.apSsid;el('infApIp').textContent=ST.apIP;
+  el('infWanIp').textContent=ST.wanIP||'—';el('infGw').textContent=ST.gateway||'—';
+  el('infDns').textContent=ST.dnsEffective;el('infMac').textContent=ST.apMac;
+  el('upSsidTxt').textContent=ST.upstreamSsid||'—';
+  el('upWanTxt').textContent=ST.wanIP||'—';
+  el('upRssiTxt').textContent=on?('−'+Math.abs(ST.rssi)+' dBm'):'—';
+  const dot=el('upDot');if(dot)dot.style.background=on?'var(--ok)':'var(--bad)';
+  el('upStateTxt').textContent=on?'Enlace activo':'Sin enlace';
+  /* heap + gráficas (a prueba de campos ausentes en /api/status: antes un
+     freeHeap/freePsram/cpuMhz ausente pintaba NaN/undefined y metía NaN en
+     las gráficas, que quedaban en blanco) */
+  const heapKB=(typeof ST.freeHeap==='number')?Math.round(ST.freeHeap/1024):null;
+  const psramKB=(typeof ST.freePsram==='number')?Math.round(ST.freePsram/1024):null;
+  if(heapKB!==null){heapHist.push(heapKB);if(heapHist.length>40)heapHist.shift();}
+  heapMin=(heapKB===null)?heapMin:(heapMin===null?heapKB:Math.min(heapMin,heapKB));
+  el('heapNow').textContent=(heapKB===null?'–':heapKB);const dm=el('devMacSta');if(dm)dm.textContent=(ST&&ST.wanMac)?ST.wanMac:'—';el('heapMin').textContent=(heapMin===null?'–':heapMin);
+  el('psramNow').textContent=(psramKB===null?'–':psramKB);
+  const usedPct=(heapKB===null)?null:Math.max(1,Math.min(99,Math.round(100-heapKB/320*100)));
+  el('heapPctVal').textContent=(usedPct===null?'–':usedPct);
+  el('cpuMhzVal').textContent=(typeof ST.cpuMhz==='number'?ST.cpuMhz:'–');
+  el('tempVal').textContent=(ST.tempC!=null?ST.tempC.toFixed(1):'–');
+  el('tempVal2').textContent=(ST.tempC!=null?ST.tempC.toFixed(1):'–');
+  el('heapVal').textContent=(heapKB===null?'–':heapKB);
+  el('heapBar').style.width=(heapKB===null?'0%':Math.max(2,heapKB/320*100)+'%');
+  el('psramVal').textContent=(psramKB===null?'–':psramKB);
+  el('psramBar').style.width=(psramKB===null?'0%':Math.max(2,ST.freePsram/(4*1024*1024)*100)+'%');
+  if(chMain){chMain.data.labels=heapHist.map((_,i)=>i);chMain.data.datasets[0].data=heapHist;chMain.update('none');}
+  if(chHeap){chHeap.data.labels=heapHist.map((_,i)=>i);chHeap.data.datasets[0].data=heapHist;chHeap.update('none');}
+  if(chHeapPct&&usedPct!==null){chHeapPct.data.datasets[0].data=[usedPct,100-usedPct];chHeapPct.update('none');}
+  /* registro de cambios */
+  const key={c:on,n:ST.nat,cl:ST.clients};
+  if(prevState.c!==undefined){
+    if(key.c!==prevState.c)logEvent(on?('Enlace establecido con <b>'+esc(ST.upstreamSsid)+'</b> ('+(ST.wanIP||'')+')'):'Se perdió el enlace con la red superior');
+    if(key.n!==prevState.n&&on)logEvent(ST.nat?'NAT activado':'NAT desactivado');
+    if(key.cl!==prevState.cl)logEvent('Clientes conectados: <b>'+ST.clients+'</b>');
+  }
+  prevState=key;
+}
+/* uptime con reloj local entre polls */
+setInterval(()=>{if(ST){ST.uptimeSec++;el('stUp').textContent=fmtUp(ST.uptimeSec);}},1000);
+setInterval(()=>{el('clock').textContent=new Date().toLocaleTimeString('es-MX');},1000);
+
+/* ---------- Configuración ---------- */
+async function loadConfig(){
+  CFG=await api('/api/config');
+  blockedSet.clear();
+  (CFG.blockedList||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(m=>blockedSet.add(m.toUpperCase()));
+  renderUpnets();fillWan();fillAp();fillDns();fillToggles();fillMac();fillGuest();renderBlocked();
+  el('otaFw').textContent=CFG.firmware||'Wav32';
+  el('otaUp').textContent=CFG.upstreamSsid||'—';
+  el('sdWd').textContent=CFG.watchdog?'Activo':'Apagado';
+}
+function netsArr(){return (CFG.networks||[]).map(n=>({ssid:n.ssid,open:!!n.open}));}
+function wanPayload(nets){
+  return {networks:nets.map(n=>({ssid:n.ssid,password:'',open:n.open,keep:true})),
+    dns:CFG.dns,dnsAuto:CFG.dnsAuto,static:CFG.wanStatic,ip:CFG.wanIP||'',gateway:CFG.wanGateway||'',
+    mask:CFG.wanMask||'',dns2:CFG.wanDNS2||''};
+}
+function renderUpnets(){
+  const box=el('upnetList');const nets=netsArr();
+  if(!nets.length){box.innerHTML='<small style="color:var(--dim)">Sin redes guardadas. Busca y agrega una.</small>';return;}
+  box.innerHTML=nets.map((n,i)=>{
+    const active=ST&&ST.connected&&ST.upstreamSsid===n.ssid;
+    return '<div class="up-net'+(active?' on':'')+'">'+
+    '<svg class="ic lg" style="color:'+(active?'var(--ok)':'var(--dim)')+'"><use href="#i-wifi"/></svg>'+
+    '<div style="flex:1"><b>'+esc(n.ssid)+'</b>'+(active?' <span class="pill ok">Conectada</span>':'')+
+    '<br><small style="color:var(--mut)">'+(i===0?'Principal':'Respaldo '+i)+' · '+(n.open?'Abierta':'WPA2')+'</small></div>'+
+    (active?'':'<button class="btn gh sm" onclick="useNet('+i+')">Usar</button>')+
+    '<button class="btn dng sm" onclick="delNet('+i+')" title="Quitar"><svg class="ic sm"><use href="#i-trash"/></svg></button></div>';
+  }).join('');
+}
+async function useNet(i){
+  const nets=netsArr();const [n]=nets.splice(i,1);nets.unshift(n);
+  askConfirm('Cambiar de red superior','Wav32 se conectará primero a «'+n.ssid+'». El equipo se reinicia al guardar.', 'Cambiar',async()=>{
+    if(await save('/api/wan',wanPayload(nets),'Red superior actualizada',true))setTimeout(loadConfig,4000);
+  });
+}
+async function delNet(i){
+  const nets=netsArr();const n=nets[i];
+  askConfirm('Quitar red guardada','Se eliminará «'+n.ssid+'» de las redes superiores. El equipo se reinicia al guardar.','Quitar',async()=>{
+    nets.splice(i,1);
+    if(await save('/api/wan',wanPayload(nets),'Red eliminada',true))setTimeout(loadConfig,4000);
+  });
+}
+function fillWan(){
+  el('wanModeSel').value=CFG.wanStatic?'static':'dhcp';
+  el('wanStaticFields').style.display=CFG.wanStatic?'block':'none';
+  el('wanIpIn').value=CFG.wanIP||'';el('wanGwIn').value=CFG.wanGateway||'';
+  el('wanMaskIn').value=CFG.wanMask||'';el('wanDns2In').value=CFG.wanDNS2||'';
+  el('wanStateKv').textContent=(ST&&ST.connected)?'Conectado':'Sin enlace';
+  el('wanIpKv').textContent=(ST&&ST.wanIP)||'—';el('wanGwKv').textContent=(ST&&ST.gateway)||'—';
+  el('wanDnsKv').textContent=(ST&&ST.dns)||'—';
+  el('wanSigKv').textContent=(ST&&ST.connected)?('−'+Math.abs(ST.rssi)+' dBm · canal '+ST.channel):'—';
+  el('wanMacKv').textContent=(ST&&ST.wanMac)||'—';
+}
+function wanModeChange(){el('wanStaticFields').style.display=el('wanModeSel').value==='static'?'block':'none';}
+async function saveWanFields(){
+  CFG.wanStatic=el('wanModeSel').value==='static';
+  CFG.wanIP=el('wanIpIn').value.trim();CFG.wanGateway=el('wanGwIn').value.trim();
+  CFG.wanMask=el('wanMaskIn').value.trim();CFG.wanDNS2=el('wanDns2In').value.trim();
+  askConfirm('Guardar conexión WAN','Se aplicará la configuración WAN y el equipo se reiniciará.','Guardar',async()=>{
+    if(await save('/api/wan',wanPayload(netsArr()),'Conexión WAN guardada',true))setTimeout(loadConfig,4000);
+  });
+}
+async function scanNets(){
+  const b=el('scanBox');b.innerHTML='<div class="log">Buscando redes… (la radio se comparte, tarda unos segundos)</div>';
+  try{
+    const v=await api('/api/scan');
+    if(!v.networks.length){b.innerHTML='<div class="log">No se encontraron redes.</div>';return;}
+    b.innerHTML=v.networks.map(n=>{
+      const known=netsArr().some(x=>x.ssid===n.ssid);
+      return '<div class="up-net"><svg class="ic" style="color:var(--acc)"><use href="#i-wifi"/></svg>'+
+      '<div style="flex:1"><b>'+esc(n.ssid)+'</b><br><small style="color:var(--mut)">Canal '+n.channel+' · '+(n.secure?'WPA2':'Abierta')+' · −'+Math.abs(n.rssi)+' dBm</small></div>'+
+      (known?'<span class="pill ok">Guardada</span>':'<button class="btn gh sm" onclick="addNet(\''+esc(n.ssid).replace(/'/g,"\\'")+'\','+n.secure+')">Agregar</button>')+'</div>';
+    }).join('');
+  }catch(e){b.innerHTML='<div class="log">Error al buscar: '+esc(e.message)+'</div>';}
+}
+async function addNet(ssid,secure){
+  if(netsArr().length>=3){toast('Máximo 3 redes guardadas');return;}
+  const doAdd=async(pw)=>{
+    const nets=netsArr();nets.push({ssid:ssid,open:!secure});
+    const p=wanPayload(nets);
+    p.networks[p.networks.length-1]={ssid:ssid,password:pw||'',open:!secure,keep:false};
+    askConfirm('Agregar red superior','Se guardará «'+ssid+'» y el equipo se reiniciará.','Agregar',async()=>{
+      if(await save('/api/wan',p,'Red agregada',true))setTimeout(loadConfig,4000);
+    });
+  };
+  if(secure){
+    askConfirm('Contraseña de «'+ssid+'»','Escribe la clave Wi-Fi de la red (queda guardada solo en el equipo).','Continuar',v=>doAdd(v),null,'La clave de la red');
+    el('mInput').type='password';
+  }else doAdd('');
+}
+
+/* ---------- Mi red (AP) ---------- */
+function fillAp(){
+  el('apSsidIn').value=CFG.apSsid;
+  el('apSecurity').value=CFG.apProtected?'wpa2':'open';
+  el('apPassFields').style.display=CFG.apProtected?'block':'none';
+  el('apPassIn').value='';el('apPassIn').placeholder=CFG.apPasswordSet?'•••••••• (guardada)':'8 a 63 caracteres';
+  el('apChannelSel').value=String(CFG.channel||0);
+  el('apClientsIn').value=CFG.maxClients;
+  el('apLanIn').value='192.168.'+CFG.lanOctet+'.1';
+  el('txRange').value=String(CFG.txPower||0);txLabel();
+  el('apHiddenSw').checked=!!CFG.apHidden;
+  el('apCliCount').textContent=(ST?ST.clients:'–')+' de '+CFG.maxClients;
+}
+function txLabel(){el('txVal').textContent=['19.5','17','13','8.5','2'][+el('txRange').value]+' dBm';}
+async function saveAp(){
+  const ch=+el('apChannelSel').value;
+  const body={ssid:el('apSsidIn').value.trim(),password:el('apPassIn').value,
+    protected:el("apSecurity").value==="wpa2",
+    channel:ch===0?((ST&&ST.channel)||6):ch,clients:+el('apClientsIn').value,
+    hidden:el('apHiddenSw').checked,txPower:+el('txRange').value};
+  askConfirm('Guardar tu red Wav32','Se aplicará la configuración del punto de acceso y el equipo se reiniciará. Tus dispositivos se reconectarán.','Guardar',async()=>{
+    if(await save('/api/wireless',body,'Red Wav32 guardada',true))setTimeout(loadConfig,4000);
+  });
+}
+async function saveLan(){
+  const octet=Number((el('apLanIn').value.trim().split('.')[2]||''));
+  askConfirm('Cambiar la red LAN','La dirección de tu red pasará a 192.168.'+octet+'.1 y el equipo se reiniciará.','Cambiar',async()=>{
+    if(await save('/api/lan',{octet:octet},'LAN actualizada',true))setTimeout(loadConfig,4000);
+  });
+}
+/* ---------- DNS ---------- */
+const DNS_PRESETS={'1.1.1.1':'Cloudflare','auto':'Automático','94.140.14.14':'AdGuard','1.1.1.3':'Cloudflare Fam.','9.9.9.9':'Quad9','8.8.8.8':'Google','208.67.222.222':'OpenDNS'};
+function fillDns(){
+  const cur=CFG.dnsAuto?'auto':CFG.dns;
+  document.querySelectorAll('#dnsGrid .dns-c').forEach(c=>{
+    c.classList.toggle('on',c.dataset.dns===cur);
+    c.onclick=()=>pickDns(c.dataset.dns);
+  });
+  el('dnsCustomBox').style.display=cur==='custom'||(!DNS_PRESETS[cur]&&cur!=='auto')?'block':'none';
+  if(el('dnsCustomBox').style.display==='block')el('dnsCustomIn').value=CFG.dnsAuto?'':CFG.dns;
+}
+async function pickDns(k){
+  if(k==='custom'){el('dnsCustomBox').style.display='block';el('dnsCustomIn').focus();return;}
+  el('dnsCustomBox').style.display='none';
+  const name=DNS_PRESETS[k]||k;
+  askConfirm('Cambiar el DNS','Los clientes de tu red usarán '+name+'. El equipo se reinicia al guardar.','Cambiar',async()=>{
+    if(k==='auto'){CFG.dnsAuto=true;}else{CFG.dnsAuto=false;CFG.dns=k;}
+    if(await save('/api/wan',wanPayload(netsArr()),'DNS actualizado: '+name,true))setTimeout(loadConfig,4000);
+  });
+}
+async function saveDnsCustom(){
+  const v=el('dnsCustomIn').value.trim();if(!v){toast('Escribe un DNS válido');return;}
+  CFG.dnsAuto=false;CFG.dns=v;
+  askConfirm('Usar DNS personalizado','Los clientes usarán '+v+'. El equipo se reinicia al guardar.','Usar',async()=>{
+    if(await save('/api/wan',wanPayload(netsArr()),'DNS personalizado guardado',true))setTimeout(loadConfig,4000);
+  });
+}
+
+/* ---------- Clientes + bloqueo ---------- */
+function devIcon(name){
+  const n=(name||'').toLowerCase();
+  if(n.includes('tv')||n.includes('tele'))return 'i-tv';
+  if(n.includes('laptop')||n.includes('pc')||n.includes('macbook'))return 'i-laptop';
+  if(n.includes('foco')||n.includes('bombilla')||n.includes('cam'))return 'i-cpu';
+  return 'i-phone';
+}
+async function loadClients(manual){
+  try{
+    const v=await api('/api/clients');
+    const tb=el('cliBody');
+    if(!v.clients.length){tb.innerHTML='<tr><td colspan="4" style="color:var(--dim)">Ningún dispositivo conectado ahora.</td></tr>';return;}
+    tb.innerHTML=v.clients.map(c=>{
+      const blocked=blockedSet.has(c.mac.toUpperCase());
+      return '<tr class="'+(blocked?'blocked':'')+'"><td><div class="dev"><div class="db"><svg class="ic"><use href="#'+devIcon(c.name||'')+'"/></svg></div>'+
+      '<div><b>'+esc(c.name||'Dispositivo')+'</b>'+(blocked?'<span class="pill bad" style="margin-left:8px">Bloqueado · sin internet</span>':'')+
+      '<br><small class="mono" style="color:var(--dim)">'+esc(c.mac)+'</small></div></div></td>'+
+      '<td class="mono">'+esc(c.ip)+'</td>'+
+      '<td><span class="pill '+rssiClass(c.rssi)+'">−'+Math.abs(c.rssi)+' dBm</span></td>'+
+      '<td class="mono" style="white-space:nowrap"><button class="btn '+(blocked?'pri':'gh')+' sm" onclick="toggleBlock(\''+c.mac+'\','+blocked+')">'+(blocked?'Desbloquear':'Bloquear')+'</button> '+
+      '<button class="btn dng sm" onclick="kick(\''+c.mac+'\')">Expulsar</button></td></tr>';
+    }).join('');
+    if(manual)toast('Lista actualizada');
+  }catch(e){if(manual)toast('Error: '+e.message);}
+}
+async function toggleBlock(mac,blocked){
+  if(blocked){
+    if(await save('/api/block',{mac:mac,action:'remove'},'Dispositivo desbloqueado')){blockedSet.delete(mac.toUpperCase());renderBlocked();loadClients();}
+  }else{
+    askConfirm('Bloquear dispositivo','El dispositivo '+mac+' seguirá conectado a tu red y con IP, pero sin internet: al navegar verá la página «Has sido bloqueado».','Bloquear',async()=>{
+      if(await save('/api/block',{mac:mac,action:'add'},'Dispositivo bloqueado')){blockedSet.add(mac.toUpperCase());renderBlocked();loadClients();}
+    });
+  }
+}
+async function kick(mac){
+  askConfirm('Expulsar cliente','Se desconectará '+mac+' de tu red. Podrá volver a conectarse si conoce la clave (o si la red es abierta). Para impedirle el internet sin echarlo, usa Bloquear.','Expulsar',async()=>{
+    if(await save('/api/kick',{mac:mac},'Cliente expulsado'))setTimeout(loadClients,1200);
+  });
+}
+el('cliSearch').addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase();
+  document.querySelectorAll('#cliBody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none';});
+});
+/* ---------- Bloqueo avanzado (Seguridad) ---------- */
+function renderBlocked(){
+  const n=blockedSet.size;
+  el('blkCount').textContent=n+(n===1?' dispositivo':' dispositivos');
+  const c=el('apBlockedCount');if(c)c.textContent=n;
+  const s=el('sdBlocked');if(s)s.textContent=n;
+  const box=el('blockedList');
+  if(!n){box.innerHTML='<small style="color:var(--dim)">Ninguno todavía. Bloquea a alguien desde la página «Clientes».</small>';return;}
+  box.innerHTML=[...blockedSet].map(m=>'<span class="chip mono" style="font-size:12px;margin:0 6px 6px 0">'+m+' · <span style="color:var(--bad)">sin internet</span></span>').join('');
+}
+async function saveBlkMsg(){
+  if(await save('/api/block',{msg:el('blkMsg').value},'Mensaje de bloqueo guardado'))toast('Los bloqueados verán el nuevo mensaje');
+}
+function showBlocked(){
+  el('blkViewMsg').textContent=el('blkMsg').value;
+  el('blkView').classList.add('on');
+}
+function hideBlocked(){el('blkView').classList.remove('on');}
+
+/* ---------- Avanzado ---------- */
+async function loadPortmaps(){
+  try{
+    const v=await api('/api/portmaps');
+    const tb=el('pmBody');
+    tb.innerHTML=v.rules.length?v.rules.map(r=>'<tr><td><span class="tag">'+r.protocol+'</span></td><td class="mono">'+r.external+'</td><td class="mono">'+esc(r.ip)+'</td><td class="mono">'+r.internal+'</td><td><button class="btn dng sm" onclick="pmDel('+r.index+')"><svg class="ic sm"><use href="#i-trash"/></svg></button></td></tr>').join(''):'<tr><td colspan="5" style="color:var(--dim)">Sin reglas todavía.</td></tr>';
+  }catch(e){}
+}
+async function pmAdd(){
+  const body={action:'add',protocol:el('pmProto').value,external:+el('pmExt').value,ip:el('pmIp').value.trim(),internal:+el('pmInt').value};
+  if(!body.external||!body.internal||!body.ip){toast('Completa puerto externo, IP y puerto interno');return;}
+  if(await save('/api/portmaps',body,'Regla agregada'))loadPortmaps();
+}
+async function pmDel(i){
+  askConfirm('Eliminar regla de puertos','La regla dejará de aplicarse de inmediato y el puerto se cerrará.','Eliminar',async()=>{
+    if(await save('/api/portmaps',{action:'delete',index:i},'Regla eliminada'))loadPortmaps();
+  });
+}
+function fillToggles(){
+  el('wdSw').checked=!!CFG.watchdog;
+  el('wanAdminSw').checked=!!CFG.wanAdmin;
+  el('ledSw').checked=!!CFG.ledEnabled;
+  el('schedSw').checked=!!CFG.dailyReboot;
+  el('schedTime').value=String(CFG.rebootHour||0).padStart(2,'0')+':'+String(CFG.rebootMinute||0).padStart(2,'0');
+  if(CFG.blkMsg!==undefined && document.activeElement!==el('blkMsg'))el('blkMsg').value=CFG.blkMsg;
+}
+async function saveToggles(){await save('/api/toggles',{wanAdmin:el('wanAdminSw').checked,watchdog:el('wdSw').checked},'Opciones guardadas');CFG.watchdog=el('wdSw').checked;CFG.wanAdmin=el('wanAdminSw').checked;el('sdWd').textContent=CFG.watchdog?'Activo':'Apagado';}
+async function saveLed(){await save('/api/led',{enabled:el('ledSw').checked},'LED actualizado');}
+async function saveSchedule(){
+  const parts=el('schedTime').value.split(':');
+  await save('/api/schedule',{enabled:el('schedSw').checked,hour:+parts[0]||0,minute:+parts[1]||0,offset:CFG.utcOffsetMinutes||0},'Horario guardado');
+}
+async function diagDns(){
+  const host=el('diagHost').value.trim()||'google.com';
+  el('diagBox').innerHTML='<div>Resolviendo '+esc(host)+' vía '+(CFG.dnsAuto?'DNS del enlace':esc(CFG.dns))+'…</div>';
+  try{
+    const v=await api('/api/dns',{host:host});
+    el('diagBox').innerHTML='<div><span class="t">'+new Date().toLocaleTimeString('es-MX')+'</span> · '+esc(host)+' → <b>'+esc(v.ip||'sin respuesta')+'</b> '+(v.resolved?'✓':'✗')+'</div>';
+  }catch(e){el('diagBox').innerHTML='<div>Error: '+esc(e.message)+'</div>';}
+}
+
+/* ---------- Seguridad ---------- */
+function fillMac(){
+  el('macModeSel').value=CFG.macMode||'off';
+  renderMacChips((CFG.macList||'').split('\n').map(s=>s.trim()).filter(Boolean));
+}
+function renderMacChips(list){
+  el('macChips').innerHTML=list.map(m=>'<span class="chip mono" style="font-size:12px">'+esc(m)+' <a href="#" onclick="macDel(this,\''+esc(m)+'\');return false" style="color:var(--bad)">✕</a></span>').join('')||'<small style="color:var(--dim)">Lista vacía.</small>';
+  el('macChips').dataset.list=list.join('\n');
+}
+function macAdd(){
+  const v=el('macIn').value.trim().toUpperCase();if(!v)return;
+  const list=(el('macChips').dataset.list||'').split('\n').filter(Boolean);
+  if(!list.includes(v))list.push(v);
+  el('macIn').value='';renderMacChips(list);
+}
+function macDel(a,m){
+  const list=(el('macChips').dataset.list||'').split('\n').filter(x=>x&&x!==m);
+  renderMacChips(list);
+}
+async function macSave(){
+  await save('/api/access',{mode:el('macModeSel').value,list:el('macChips').dataset.list||''},'Control de acceso guardado');
+}
+function fillGuest(){el('guestSw').checked=!!CFG.guestMode;}
+async function guestToggle(){
+  const body={enabled:el('guestSw').checked,password:el('guestPassIn').value};
+  askConfirm(el('guestSw').checked?'Activar modo invitado':'Desactivar modo invitado',
+    el('guestSw').checked?'Se aplicará la clave temporal y el panel solo responderá a tu dispositivo. El equipo se reinicia.':'Se restaurará la configuración anterior de tu red. El equipo se reinicia.',
+    'Continuar',async()=>{
+      if(await save('/api/guest',body,'Modo invitado '+(body.enabled?'activado':'desactivado'),true))setTimeout(loadConfig,4000);
+      else el('guestSw').checked=!body.enabled;
+    });
+}
+async function doLogout(){
+  try{await api('/api/logout',{});}catch(e){}
+  document.cookie='WAV32SID=; Path=/; Max-Age=0';
+  location.href='/';
+}
+async function saveAdmin(){
+  if(el('admPass1').value!==el('admPass2').value){toast('Las contraseñas nuevas no coinciden');return;}
+  if(await save('/api/admin',{old:el('admOld').value,password:el('admPass1').value},'Contraseña actualizada')){
+    el('admOld').value='';el('admPass1').value='';el('admPass2').value='';
+    toast('La próxima vez entra con la nueva contraseña');
+  }
+}
+
+/* ---------- Dispositivo ---------- */
+async function otaUpload(inp){
+  const f=inp.files[0];if(!f)return;
+  askConfirm('Actualizar firmware','Se instalará «'+f.name+'» ('+Math.round(f.size/1024)+' KB) en la ranura libre. Si algo falla, el equipo vuelve solo a la versión actual.','Actualizar',async()=>{
+    const fd=new FormData();fd.append('firmware',f,f.name);
+    try{
+      const r=await fetch('/api/ota',{method:'POST',credentials:'same-origin',headers:{'X-Wav32':'1'},body:fd});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      toast('Firmware enviado · el equipo se reinicia…');
+    }catch(e){toast('Error OTA: '+e.message);}
+    inp.value='';
+  });
+}
+async function backupDl(){
+  try{
+    const r=await fetch('/api/backup',{credentials:'same-origin'});
+    const blob=await r.blob();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='wav32-backup.json';a.click();
+    toast('Respaldo descargado (sin contraseñas)');
+  }catch(e){toast('Error: '+e.message);}
+}
+async function restoreUp(inp){
+  const f=inp.files[0];if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    askConfirm('Restaurar respaldo','Se aplicará la configuración de «'+f.name+'» y el equipo se reiniciará. Las contraseñas no vienen en el respaldo.','Restaurar',async()=>{
+      if(await save('/api/restore',data,'Respaldo restaurado',true))setTimeout(loadConfig,4000);
+    });
+  }catch(e){toast('Archivo no válido: '+e.message);}
+  inp.value='';
+}
+function rebootAsk(){
+  askConfirm('Reiniciar el equipo','Wav32 se reiniciará ahora. Tus clientes se desconectarán unos segundos.','Reiniciar',async()=>{
+    await save('/api/reboot',{},'Reiniciando…');
+  });
+}
+function askFactory(){
+  askConfirm('Restablecer el equipo de fábrica',
+    'Se borrará TODA la configuración: redes superiores, contraseña de administrador, reglas de puertos, listas y bloqueos. El equipo volverá a arrancar como nuevo, con la red abierta Wav32-XXXXXX. Escribe RESTABLECER para confirmar.',
+    'Sí, restablecer',async()=>{
+      await save('/api/factory',{confirm:'RESTABLECER'},'Equipo restablecido · conéctate a la red abierta Wav32');
+    },'RESTABLECER');
+}
+
+/* ---------- Gráficas (Chart.js servido aparte, con caché) ---------- */
+let chMain=null,chHeap=null,chHeapPct=null,chartsReady=false;
+function initCharts(){
+  if(chartsReady||!window.Chart)return;
+  chartsReady=true;
+  Chart.defaults.color='#8fa3bd';Chart.defaults.font.family='Inter, system-ui, sans-serif';
+  const mk=(id,color)=>new Chart(el(id),{type:'line',data:{labels:heapHist.map((_,x)=>x),datasets:[{label:'KB libres',data:heapHist,borderColor:color,backgroundColor:color+'2b',fill:true,tension:.4,borderWidth:2,pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'#ffffff08'},ticks:{font:{size:11}},suggestedMin:100,suggestedMax:300}}}});
+  chMain=mk('chMain','#38bdf8');chHeap=mk('chHeap','#34d399');
+  chHeapPct=new Chart(el('chHeapPct'),{type:'doughnut',
+    data:{labels:['En uso','Libre'],datasets:[{data:[50,50],backgroundColor:['#38bdf8','#ffffff10'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}},
+    plugins:[{id:'ct',afterDraw(c){const{ctx,chartArea:a}=c;ctx.save();ctx.textAlign='center';
+      ctx.fillStyle='#e8eef7';ctx.font='800 30px Inter, system-ui';ctx.fillText(Math.round(c.data.datasets[0].data[0])+'%',(a.left+a.right)/2,(a.top+a.bottom)/2+2);
+      ctx.fillStyle='#8fa3bd';ctx.font='600 11px Inter, system-ui';ctx.fillText('RAM EN USO',(a.left+a.right)/2,(a.top+a.bottom)/2+24);ctx.restore();}}]});
+}
+/* Sin límite de 20 s: en red lenta /chart.js puede tardar más; antes el temporizador
+   se rendía y las gráficas quedaban en blanco para siempre en esa sesión. */
+const chartTimer=setInterval(()=>{if(window.Chart){initCharts();clearInterval(chartTimer);}},600);
+
+/* ---------- Arranque ---------- */
+(async()=>{
+  try{await loadConfig();}catch(e){toast('No se pudo cargar la configuración: '+e.message);}
+  await loadStatus();
+  logEvent('Panel conectado · firmware <b>'+esc(ST?ST.firmware:'')+'</b>');
+  loadClients();loadPortmaps();
+  setInterval(loadStatus,3000);
+  setInterval(()=>{if(el('page-terminal').classList.contains('on'))loadClients();},15000);
+})();
+</script>
+
+</body>
+</html>

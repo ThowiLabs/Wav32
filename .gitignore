@@ -1,0 +1,15 @@
+/build/
+/backups/
+/dist/
+/firmware/Wav32/build/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+
+# Contexto local descifrado (no publicar)
+/contexto/
+/tareas/
+/contexto.md
+/.agents-*.tmp
+/.agents-restore-*/
